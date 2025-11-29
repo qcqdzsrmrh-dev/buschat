@@ -1,61 +1,48 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken"); // Token için eklendi
 const User = require("../models/User");
 const router = express.Router();
 
-
-// SIGN UP API
+/* ===========================
+   🔥 SIGNUP (kayıt)
+=========================== */
 router.post("/signup", async (req, res) => {
-  console.log("SIGNUP API CALLED ✔");
-
   const { email, username, password } = req.body;
 
-  // Check if email or username is already taken
+  // aynı email veya aynı username varsa kayıt izni verme
   const exists = await User.findOne({ $or: [{ email }, { username }] });
-  if (exists) return res.status(400).json({ message: "Email or Username already used" });
+  if (exists) return res.json({ success: false, message: "Email veya username kullanılıyor" });
 
-  // Hash password
   const hashed = await bcrypt.hash(password, 10);
 
-  // Create User
   const user = new User({ email, username, password: hashed });
   await user.save();
 
   return res.json({
     success: true,
-    userId: user._id,
-    message: "User created successfully"
+    username: user.username,        // Flutter buradan alacak!
   });
 });
 
-
-// LOGIN API + TOKEN
+/* ===========================
+   🔥 LOGIN (Hem email hem kullanıcı adı ile giriş!)
+=========================== */
 router.post("/login", async (req, res) => {
-  console.log("LOGIN API CALLED ✔");
-
   const { email, password } = req.body;
 
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: "User not found" });
+  const user = await User.findOne({
+    $or: [{ email }, { username: email }]  // 👈 email inputuna username yazılırsa da eşleşir
+  });
+
+  if (!user) return res.json({ success: false, message: "Kullanıcı bulunamadı" });
 
   const match = await bcrypt.compare(password, user.password);
-  if (!match) return res.status(400).json({ message: "Wrong password" });
-
-  // JWT TOKEN oluşturma
-  const token = jwt.sign(
-    { userId: user._id, username: user.username },
-    "superSecretKey123",                // 🔥 daha sonra .env içine taşıyacağız
-    { expiresIn: "30d" }                 // token geçerlilik süresi
-  );
+  if (!match) return res.json({ success: false, message: "Şifre yanlış" });
 
   return res.json({
     success: true,
-    token,
-    userId: user._id,
-    username: user.username
+    username: user.username,  // Flutter → Profile'a taşır
   });
 });
 
-
-module.exports = router;   // 🔥 En altta olmalı — ikisini de export eder
+module.exports = router;

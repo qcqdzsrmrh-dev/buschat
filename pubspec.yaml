@@ -19,6 +19,7 @@ dependencies:
 
   # 🔥 API REQUESTS (Login, Signup, Profile)
   http: ^1.2.0
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:

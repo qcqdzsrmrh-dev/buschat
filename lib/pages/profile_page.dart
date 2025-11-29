@@ -1,65 +1,84 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'edit_profile_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  String username = "Yükleniyor...";
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserData();
+  }
+
+  Future<void> loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      username = prefs.getString("username") ?? "Kullanıcı adı bulunamadı";
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
 
-      // Üst Köşe Butonları *********************************
       body: SafeArea(
         child: Stack(
           children: [
-            // ✦ Ayarlar (Sol üst)
+            // ✦ Ayarlar – Sol Üst
             Positioned(
               left: 15,
               top: 10,
               child: IconButton(
                 icon: const Icon(Icons.settings, color: Colors.white, size: 26),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Ayar menüsü yakında!")),
-                  );
-                },
+                onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Ayar menüsü yakında!")),
+                ),
               ),
             ),
 
-            // ✦ Çıkış (Sağ üst)
+            // ✦ Çıkış – Sağ Üst
             Positioned(
               right: 15,
               top: 10,
               child: IconButton(
                 icon: const Icon(Icons.logout, color: Colors.white, size: 26),
-                onPressed: () {
-                  Navigator.pop(context); // şimdilik welcome’a dönüş gibi
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.clear(); // çıkış yapınca kullanıcı silinir
+                  Navigator.pushReplacementNamed(context, "/auth");
                 },
               ),
             ),
 
-            // İÇERİK ****************************************************
+            // 🔥 PROFIL UI
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   const SizedBox(height: 60),
 
-                  // 🔥 Profil Foto
                   const CircleAvatar(
                     radius: 55,
                     backgroundImage: NetworkImage(
-                      "https://i.imgur.com/vJg3z1P.jpeg", // İstediğinde değiştir
+                      "https://i.imgur.com/vJg3z1P.jpeg",
                     ),
                   ),
 
                   const SizedBox(height: 14),
 
-                  // Kullanıcı Adı
-                  const Text(
-                    "kullanici_adi",
-                    style: TextStyle(
+                  /// 🔥 ARTIK BACKEND'DEN GELEN KULLANICI ADI BURADA
+                  Text(
+                    username,
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
@@ -74,7 +93,7 @@ class ProfilePage extends StatelessWidget {
 
                   const SizedBox(height: 22),
 
-                  // 📊 Mini istatistikler - daha yakın ve merkezli
+                  // 📊 İstatistik Alanı
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -88,26 +107,21 @@ class ProfilePage extends StatelessWidget {
 
                   const SizedBox(height: 35),
 
-                  // ⭐ BUTONLAR
                   profileButton(
                     label: "Profilini Paylaş",
                     color: Colors.blueAccent,
-                    onTap: () {},
                   ),
-
                   const SizedBox(height: 15),
 
                   profileButton(
                     label: "Profilini Düzenle",
                     isOutline: true,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const EditProfilePage(),
-                        ),
-                      );
-                    },
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const EditProfilePage(),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -118,7 +132,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // ---- İstatistik Kartı ----
+  // ---- İstatistik Widgetı ----
   Widget statItem(IconData icon, String value, String label) {
     return Column(
       children: [
@@ -133,11 +147,11 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  // ---- Profil Sayfası Butonları ----
+  // ---- Profil Butonları ----
   Widget profileButton({
     required String label,
     bool isOutline = false,
-    required Function onTap,
+    Function? onTap,
     Color color = Colors.blueAccent,
   }) {
     return SizedBox(
@@ -151,7 +165,7 @@ class ProfilePage extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
           ),
         ),
-        onPressed: () => onTap(),
+        onPressed: () => onTap?.call(),
         child: Text(
           label,
           style: TextStyle(
