@@ -1,0 +1,28 @@
+name: anon_chat
+description: "Anonymous mask-based chat app"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: "^3.10.1"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI
+  cupertino_icons: ^1.0.6
+
+  # 🔥 REAL-TIME CHAT
+  socket_io_client: ^1.0.2
+
+  # 🔥 API REQUESTS (Login, Signup, Profile)
+  http: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

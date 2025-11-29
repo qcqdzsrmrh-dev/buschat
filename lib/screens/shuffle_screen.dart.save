@@ -1,0 +1,523 @@
+                title: Text("PLUS Gerekli"),
+                content: Text(
+                  "Filtreleri kullanmak için PLUS üyeliği gerekiyor.",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text("Kapat"),
+                  ),
+                ],
+              ),
+            );
+            return;
+          }
+
+          /// Filtreleme backend'e entegre için hazırdır.
+          /// Age, Gender, Country, City parametreleri burada servera gönderilecek.
+          print(filters);
+        },
+      ),
+    );
+  }
+
+  void openProfile(user) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (_) => ProfileDetail(
+        user: user,
+        startChat: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ChatScreen(
+                myName: "Ben",
+                otherUserName: user["name"],
+                iStartedChat: true,
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// 🔹 ARAMA KUTUSU
+            Padding(
+              padding: EdgeInsets.fromLTRB(14, 10, 14, 6),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Color(0xFF1B1B1B),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: TextField(
+                  controller: searchCtrl,
+                  onChanged: search,
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                  decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.search, color: Colors.white60),
+                    hintText: "Arama",
+                    hintStyle: TextStyle(color: Colors.white38, fontSize: 15),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ),
+
+            /// ▪ FİLTRE BAŞLIK SATIRI
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: openFilter,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.filter_alt_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                        SizedBox(width: 4),
+                        Text(
+                          "Filtrele",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    "Shuffle",
+                    style: TextStyle(color: Colors.white60, fontSize: 15),
+                  ),
+                ],
+              ),
+            ),
+
+            SizedBox(height: 10),
+
+            /// 🔥 SHUFFLE LİSTE TASARIMI
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async => refreshList(),
+                child: ListView.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (_, i) {
+                    var u = filtered[i];
+                    return Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      child: InkWell(
+                        onTap: () => openProfile(u),
+                        child: Row(
+                          children: [
+                            /// Avatar
+                            Container(
+                              width: 54,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                color: Colors.white10,
+                                shape: BoxShape.circle,
+                                border: u["online"]
+                                    ? Border.all(color: Colors.green, width: 3)
+                                    : null,
+                              ),
+                              child: Center(
+                                child: Text(
+                                  u["name"][0].toUpperCase(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(width: 12),
+
+                            /// İsim + Bio
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  u["name"],
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  u["bio"],
+                                  style: TextStyle(
+                                    color: Colors.white54,
+                                    fontSize: 13,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                            Spacer(),
+
+                            /// Premium Crown
+                            if (u["premium"])
+                              Icon(
+                                Icons.workspace_premium,
+                                color: Colors.amber,
+                                size: 22,
+                              ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+//////////////////////////////////////////
+/// 🔥 PROFİL POPUP
+//////////////////////////////////////////
+class ProfileDetail extends StatelessWidget {
+  final Map user;
+  final VoidCallback startChat;
+
+  const ProfileDetail({super.key, required this.user, required this.startChat});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Color(0xFF101010),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 46,
+            height: 5,
+            decoration: BoxDecoration(
+              color: Colors.white24,
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          SizedBox(height: 18),
+
+          CircleAvatar(
+            radius: 38,
+            backgroundColor: Colors.white10,
+            child: Text(
+              user["name"][0],
+              style: TextStyle(color: Colors.white, fontSize: 26),
+            ),
+          ),
+          SizedBox(height: 12),
+
+          Text(
+            user["name"],
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 21,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: 6),
+
+          Text(
+            user["bio"],
+            style: TextStyle(color: Colors.white70, fontSize: 14),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 26),
+
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple,
+              minimumSize: Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            onPressed: startChat,
+            child: Text(
+              "Konuşmayı Başlat",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+////////////////////////////////////////////
+/// 🔥 FİLTRE EKRANI API HAZIR YAPI
+////////////////////////////////////////////
+class FilterBottom extends StatefulWidget {
+  final bool isPlus;
+  final Function(Map<String, dynamic>) onApply;
+
+  const FilterBottom({super.key, required this.isPlus, required this.onApply});
+
+  @override
+  State<FilterBottom> createState() => _FilterBottomState();
+}
+
+class _FilterBottomState extends State<FilterBottom> {
+  double ageMin = 18, ageMax = 40;
+  String gender = "Tümü";
+  String? country;
+  String? city;
+  bool sortLastSeen = false;
+
+  List<String> countries = []; // 🔥 API’dan doldurulacak
+  List<String> cities = []; // 🔥 API’dan doldurulacak
+
+  @override
+  void initState() {
+    super.initState();
+    loadCountries(); // 🔥 API çağrısı burada yapılacak
+  }
+
+  Future loadCountries() async {
+    /// ÖRNEK GELİŞTİRME NOTU:
+    /// Burada API çağrısı yapılacak → sonrasında setState içinde:
+    ///
+    /// countries = ["Turkey","Germany","Spain","USA"];
+    /// cities = ["İstanbul","Berlin","Madrid","New York"];
+    ///
+    /// Backend entegreye hazır noktaya kadar kuruldu.
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          /// ÜST BAŞLIK
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Sıfırla",
+                style: TextStyle(color: Colors.white70, fontSize: 16),
+              ),
+              Text(
+                "Filtrele",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              InkWell(
+                onTap: () => Navigator.pop(context),
+                child: Text(
+                  "Kapat",
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+
+          /// YAŞ
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "YAŞ",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+          RangeSlider(
+            values: RangeValues(ageMin, ageMax),
+            min: 18,
+            max: 40,
+            activeColor: Colors.deepPurple,
+            onChanged: (v) =>
+                setState(() => {ageMin = v.start, ageMax = v.end}),
+          ),
+
+          SizedBox(height: 12),
+
+          /// ÜLKE
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "ÜLKE",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+          Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: Color(0xFF1C1C1C),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+
+          SizedBox(height: 12),
+
+          /// ŞEHİR
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "ŞEHİR",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+
+          Container(
+            height: 44,
+            decoration: BoxDecoration(
+              color: Color(0xFF1C1C1C),
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+
+          SizedBox(height: 12),
+
+          /// CİNSİYET
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "CİNSİYET",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+
+          SizedBox(height: 10),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              genderBtn("Tümü"),
+              genderBtn("Erkek"),
+              genderBtn("Kadın"),
+              genderBtn("Diğer"),
+            ],
+          ),
+
+          SizedBox(height: 22),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Son Görülmeye Göre Sırala",
+                style: TextStyle(color: Colors.white, fontSize: 15),
+              ),
+              Switch(
+                value: sortLastSeen,
+                onChanged: (v) => setState(() => sortLastSeen = v),
+                activeColor: Colors.deepPurple,
+              ),
+            ],
+          ),
+
+          SizedBox(height: 26),
+
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple,
+              minimumSize: Size(double.infinity, 50),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              widget.onApply({
+                "age": [ageMin, ageMax],
+                "gender": gender,
+                "country": country,
+                "city": city,
+                "sortLastSeen": sortLastSeen,
+              });
+            },
+            child: Text(
+              "Filtreleri Uygula",
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+            ),
+          ),
+          SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+
+  Widget genderBtn(String t) {
+    bool sel = gender == t;
+    return GestureDetector(
+      onTap: () => setState(() => gender = t),
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 18),
+        decoration: BoxDecoration(
+          color: sel ? Colors.deepPurple : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.deepPurple, width: 1),
+        ),
+        child: Text(
+          t,
+          style: TextStyle(
+            color: sel ? Colors.white : Colors.deepPurple,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
